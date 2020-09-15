@@ -5,104 +5,23 @@
 */
 
 volatile unsigned short int buffer_pointer = 0;
-volatile unsigned short int buffer_index = 0;
-volatile unsigned short int buffer_0_full = 0;
-volatile unsigned int buffer_0[256] = {};
-volatile unsigned short int buffer_1_full = 0;
-volatile unsigned int buffer_1[256] = {};
-volatile unsigned short int buffer_2_full = 0;
-volatile unsigned int buffer_2[256] = {};
+volatile unsigned short int buffer_index   = 0;
+volatile unsigned short int buffer_0_full  = 0;
+volatile unsigned int       buffer_0[256]  = {};
+volatile unsigned short int buffer_1_full  = 0;
+volatile unsigned int       buffer_1[256]  = {};
+volatile unsigned short int buffer_2_full  = 0;
+volatile unsigned int       buffer_2[256]  = {};
 
 void setup() {
-  /*
-    ADMUX - Analog to Digital Multiplexer Selection Register
+  // Configure the ADC input
+  ADMUX =   (0b01 << REFS1);    // Rreference voltage = AVcc
+  ADMUX |=  (0b0000 << MUX3);   // Select ADC0. Analog pin 0 on the board
 
-    |   7   |   6   |   5   |   4   |   3   |   2   |   1   |   0   |
-    | ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- |
-    | REFS1 | REFS0 | ADLAR |       |  MUX3 |  MUX2 |  MUX1 |  MUX0 |
-
-    Bits 7-6: High Voltage Reference Source
-
-    | REFS1 | REFS0 | Source       |
-    | ----- | ----- | ------------ |
-    |   0   |   0   | AREF         |
-    |   0   |   1   | AVCC         |
-    |   1   |   1   | Internal 1v1 |
-
-    Bits 5: Left Adjustment vs Right Adjustment
-
-    The reason you might want right adjustment is because right adjustment allows
-    for 10 bit presicion whereas left adjustment only allows 8 bit presicion.
-
-    | ADLAR | Adjustment |
-    | ----- | ---------- |
-    |   0   | Right      |
-    |   1   | Left       |
-
-    Bits 3-0: Input Selection
-
-    | MUX3 | MUX2 | MUX1 | MUX0 | Input    |
-    | ---- | ---- | ---- | ---- | -------- |
-    |    0 |    0 |    0 |    0 | Analog 0 |
-    |    0 |    0 |    0 |    1 | Analog 1 |
-    |    0 |    0 |    1 |    0 | Analog 2 |
-    |    0 |    0 |    1 |    1 | Analog 3 |
-    |    0 |    1 |    0 |    0 | Analog 4 |
-    |    0 |    1 |    0 |    1 | Analog 5 |
-  */
-  ADMUX = (0 << REFS1) | (1 << REFS0) | (0 << ADLAR) | (0 << MUX3) | (0 << MUX2) | (0 << MUX1) | (0 << MUX0);
-
-  /*
-    ADCSRA - Analog to Digital Converter Control Status Register A
-
-    |   7   |   6   |   5   |   4   |   3   |   2   |   1   |   0   |
-    | ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- |
-    |  ADEN |  ADSC | ADATE |  ADIF |  ADIE | ADPS2 | ADPS1 | ADPS0 |
-
-    Bit 7: Analog to Digital Conversion Enable
-
-    Enable Analog to Digital Conversion
-
-    | ADEN | Enabled |
-    | ---- | ------- |
-    |    0 | No      |
-    |    1 | Yes     |
-
-    Bit 6: Analog to Digital Conversion Start
-
-    Start the Analog to Digital Conversion
-
-    | ADSC | Started |
-    | ---- | ------- |
-    |    0 | No      |
-    |    1 | Yes     |
-
-    Bit 3: Analog to Digital Conversion Interupt Enable
-
-    Enable the ADC interupt.
-
-    | ADIE | Enabled |
-    | ---- | ------- |
-    |    0 | No      |
-    |    1 | Yes     |
-
-    Bits 2-0: Analog to Digital Conversion Prescaler Select
-
-    Determine the division factor between the system clock frequency and the input
-    clock to the ADC.
-
-    | ADPS2 | ADPS1 | ADPS0 | Division Factor |
-    | ----- | ----- | ----- | --------------- |
-    |     0 |     0 |     0 |               2 |
-    |     0 |     0 |     1 |               2 |
-    |     0 |     1 |     0 |               4 |
-    |     0 |     1 |     1 |               8 |
-    |     1 |     0 |     0 |              16 |
-    |     1 |     0 |     1 |              32 |
-    |     1 |     1 |     0 |              64 |
-    |     1 |     1 |     1 |             125 |
-  */
-  ADCSRA = (1 << ADEN) | (1 << ADSC) | (0 << ADATE) | (0 << ADIF) | (1 << ADIE) | (0 << ADPS2) | (0 << ADPS1) | (0 << ADPS0);
+  // More setup
+  ADCSRA = (1 << ADEN);         // Turn on the ADC
+  ADCSRA |= (1 << ADIE);        // Enable interrupting, with I of SREG.
+  ADCSRA |= (0b000 << ADPS2);   // Division factor of 2
 }
 
 void loop() {
